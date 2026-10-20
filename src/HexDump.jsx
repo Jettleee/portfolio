@@ -31,11 +31,14 @@ const printable = (b) => (b >= 0x20 && b < 0x7f ? String.fromCharCode(b) : '.')
 const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
+// The overflow plays once per page load, not every time the intro is shown again.
+let played = false
+
 export default function HexDump() {
-  const [written, setWritten] = useState(() => (prefersReduced() ? TOTAL : 0))
+  const [written, setWritten] = useState(() => (prefersReduced() || played ? TOTAL : 0))
 
   useEffect(() => {
-    if (prefersReduced()) return
+    if (prefersReduced() || played) return
     let raf
     let start
     const delay = 600
@@ -45,6 +48,7 @@ export default function HexDump() {
       const p = Math.min(1, Math.max(0, (t - start - delay) / dur))
       setWritten(Math.round(p * TOTAL))
       if (p < 1) raf = requestAnimationFrame(loop)
+      else played = true
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
